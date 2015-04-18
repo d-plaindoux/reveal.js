@@ -18,13 +18,27 @@
 		throw 'The reveal.js Markdown plugin requires marked to be loaded';
 	}
 
-	if( typeof hljs !== 'undefined' ) {
-		marked.setOptions({
-			highlight: function( lang, code ) {
-				return hljs.highlightAuto( lang, code ).value;
+	var markedOptions = {};
+
+	if(typeof mermaid !== 'undefined' ) {
+		markedOptions.renderer = new marked.Renderer();
+		markedOptions.renderer.code =function(code, language){
+			if(code.match(/^sequenceDiagram/)||code.match(/^graph/)){
+				return '<div class="mermaid">'+code+'</div>';
+ 			} else {
+				return '<pre><code>'+code+'</code></pre>';
 			}
-		});
+		};
 	}
+
+	if(typeof hljs !== 'undefined' ) {
+		markedOptions.highlight = function( lang, code ) {
+			return hljs.highlightAuto( lang, code ).value;
+		}
+	}
+
+	marked.setOptions(markedOptions);
+
 
 	var DEFAULT_SLIDE_SEPARATOR = '^\r?\n---\r?\n$',
 		DEFAULT_NOTES_SEPARATOR = 'note:',
@@ -355,6 +369,7 @@
 				var notes = section.querySelector( 'aside.notes' );
 				var markdown = getMarkdownFromSlide( section );
 
+
 				section.innerHTML = marked( markdown );
 				addAttributes( 	section, section, null, section.getAttribute( 'data-element-attributes' ) ||
 								section.parentNode.getAttribute( 'data-element-attributes' ) ||
@@ -367,6 +382,11 @@
 				// having overwritten the section's HTML
 				if( notes ) {
 					section.appendChild( notes );
+				}
+
+				// call mermaid if present
+				if(typeof mermaid !== 'undefined' ) { 
+					mermaid.init();
 				}
 
 			}
